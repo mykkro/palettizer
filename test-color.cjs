@@ -67,3 +67,24 @@ for (const p of Object.values(palettes)) {
 console.log(
   "PASS: identity curve, interpolation, palette reversal, luminance, alpha, all palettes and preset validation.",
 );
+
+for (const count of [2, 3, 6, 12, 32]) {
+  const points = Array.from({ length: count }, (_, i) => [
+    i / (count - 1),
+    i / (count - 1),
+  ]);
+  assert.equal(
+    math.validate({ ...good, points }, palettes).points.length,
+    count,
+  );
+}
+assert.throws(() => math.validate({ ...good, points: [[0, 0]] }, palettes));
+assert.throws(() =>
+  math.validate(
+    { ...good, points: Array.from({ length: 33 }, (_, i) => [i / 32, i / 32]) },
+    palettes,
+  ),
+);
+console.log(
+  "PASS: variable-length presets, legacy six-point curves and point-count limits.",
+);

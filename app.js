@@ -33,6 +33,11 @@
     }
   }
   function drawCurve() {
+    el("remove-point").disabled = active === 0 || active === points.length - 1;
+    el("add-point").disabled =
+      points.length >= 32 ||
+      !points.some((p, i) => i && p[0] - points[i - 1][0] >= 0.02);
+
     el("curve-line").setAttribute(
       "points",
       points.map(([x, y]) => 20 + x * 260 + "," + (232 - y * 220)).join(" "),
@@ -54,13 +59,13 @@
     el("point-info").textContent =
       "Point " +
       (active + 1) +
-      (active === 0 || active === 5 ? " (fixed)" : "");
+      (active === 0 || active === points.length - 1 ? " (fixed)" : "");
     for (const [id, axis] of [
       ["point-x", 0],
       ["point-y", 1],
     ]) {
       el(id).value = points[active][axis];
-      el(id).disabled = active === 0 || active === 5;
+      el(id).disabled = active === 0 || active === points.length - 1;
       el(id + "-value").value = points[active][axis].toFixed(2);
     }
   }
@@ -89,12 +94,21 @@
   }
   function zoom() {
     const z = el("zoom").value;
-    preview.style.maxWidth = z === "fit" ? "100%" : "none";
-    preview.style.width =
-      z === "fit" ? "100%" : preview.width * Number(z) + "px";
+    const viewport = el("image-viewport");
+    const scale =
+      z === "fit"
+        ? Math.min(
+            viewport.clientWidth / preview.width,
+            viewport.clientHeight / preview.height,
+          )
+        : Number(z);
+    preview.style.maxWidth = "none";
+    preview.style.width = Math.max(1, Math.floor(preview.width * scale)) + "px";
+    preview.style.height =
+      Math.max(1, Math.floor(preview.height * scale)) + "px";
   }
   function changePoint(x, y) {
-    if (active === 0 || active === 5) return;
+    if (active === 0 || active === points.length - 1) return;
     points[active] = [
       Math.max(
         points[active - 1][0] + 0.01,
@@ -104,46 +118,55 @@
     ];
     request();
   }
-  for (let i = 0; i < 6; i++) {
-    const h = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    h.setAttribute("r", "6");
-    h.setAttribute("class", "handle");
-    h.setAttribute("tabindex", "0");
-    h.setAttribute("role", "button");
-    el("handles").append(h);
-    h.addEventListener("focus", () => {
-      active = i;
-      drawCurve();
-    });
-    h.addEventListener("pointerdown", (e) => {
-      active = i;
-      h.focus();
-      h.setPointerCapture(e.pointerId);
-      drawCurve();
-    });
-    h.addEventListener("pointermove", (e) => {
-      if (!h.hasPointerCapture(e.pointerId)) return;
-      const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(
-        el("curve").getScreenCTM().inverse(),
+  // Rebuild handles only when point count changes, preserving pointer capture during edits.
+  function buildHandles() {
+    el("handles").replaceChildren();
+    for (let i = 0; i < points.length; i++) {
+      const h = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "circle",
       );
-      changePoint((p.x - 20) / 260, (232 - p.y) / 220);
-    });
-    h.addEventListener("pointerup", (e) => {
-      if (h.hasPointerCapture(e.pointerId))
-        h.releasePointerCapture(e.pointerId);
-    });
-    h.addEventListener("keydown", (e) => {
-      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key))
-        return;
-      e.preventDefault();
-      const step = e.shiftKey ? 0.05 : 0.005;
-      changePoint(
-        points[i][0] +
-          (e.key === "ArrowRight" ? step : e.key === "ArrowLeft" ? -step : 0),
-        points[i][1] +
-          (e.key === "ArrowUp" ? step : e.key === "ArrowDown" ? -step : 0),
-      );
-    });
+      h.setAttribute("r", "6");
+      h.setAttribute("class", "handle");
+      h.setAttribute("tabindex", "0");
+      h.setAttribute("role", "button");
+      el("handles").append(h);
+      h.addEventListener("focus", () => {
+        active = i;
+        drawCurve();
+      });
+      h.addEventListener("pointerdown", (e) => {
+        active = i;
+        h.focus();
+        h.setPointerCapture(e.pointerId);
+        drawCurve();
+      });
+      h.addEventListener("pointermove", (e) => {
+        if (!h.hasPointerCapture(e.pointerId)) return;
+        const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(
+          el("curve").getScreenCTM().inverse(),
+        );
+        changePoint((p.x - 20) / 260, (232 - p.y) / 220);
+      });
+      h.addEventListener("pointerup", (e) => {
+        if (h.hasPointerCapture(e.pointerId))
+          h.releasePointerCapture(e.pointerId);
+      });
+      h.addEventListener("keydown", (e) => {
+        if (
+          !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
+        )
+          return;
+        e.preventDefault();
+        const step = e.shiftKey ? 0.05 : 0.005;
+        changePoint(
+          points[i][0] +
+            (e.key === "ArrowRight" ? step : e.key === "ArrowLeft" ? -step : 0),
+          points[i][1] +
+            (e.key === "ArrowUp" ? step : e.key === "ArrowDown" ? -step : 0),
+        );
+      });
+    }
   }
   el("point-x").addEventListener("input", () =>
     changePoint(Number(el("point-x").value), points[active][1]),
@@ -153,6 +176,8 @@
   );
   el("reset-curve").addEventListener("click", () => {
     points = PaletteMath.identity();
+    active = 1;
+    buildHandles();
     request();
     say("Linear mapping restored.");
   });
@@ -296,6 +321,8 @@
   function apply(value) {
     const clean = PaletteMath.validate(value, PALETTES);
     points = clean.points;
+    active = Math.min(active, points.length - 1);
+    buildHandles();
     el("palette").value = clean.palette;
     el("reverse").checked = clean.reverse;
     request();
@@ -383,5 +410,49 @@
     list();
     if (persist()) say("Preset deleted.");
   });
+  el("add-point").addEventListener("click", () => {
+    if (points.length >= 32) return;
+    // Prefer the segment following selection; otherwise split the widest available gap.
+    let index = Math.min(active, points.length - 2);
+    if (points[index + 1][0] - points[index][0] < 0.02) {
+      index = 0;
+      for (let i = 1; i < points.length - 1; i++)
+        if (
+          points[i + 1][0] - points[i][0] >
+          points[index + 1][0] - points[index][0]
+        )
+          index = i;
+    }
+    if (points[index + 1][0] - points[index][0] < 0.02) return;
+    const a = points[index],
+      b = points[index + 1];
+    points.splice(index + 1, 0, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+    active = index + 1;
+    buildHandles();
+    request();
+    say(points.length + " curve points. New point selected.");
+  });
+  el("remove-point").addEventListener("click", () => {
+    if (active === 0 || active === points.length - 1) return;
+    points.splice(active, 1);
+    active = Math.min(active, points.length - 2);
+    buildHandles();
+    request();
+    say(points.length + " curve points. Selected point removed.");
+  });
+  document.querySelectorAll("[data-panel]").forEach((button) =>
+    button.addEventListener("click", () => {
+      document
+        .querySelectorAll("[data-panel]")
+        .forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+      document
+        .querySelectorAll(".control-panel")
+        .forEach((panel) => (panel.hidden = panel.id !== button.dataset.panel));
+    }),
+  );
+  el("about-open").addEventListener("click", () => el("about").showModal());
+  window.addEventListener("resize", zoom);
+  new ResizeObserver(zoom).observe(el("image-viewport"));
+  buildHandles();
   sample("landscape");
 })();

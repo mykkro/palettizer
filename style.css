@@ -367,3 +367,161 @@ a {
     max-height: 430px;
   }
 }
+
+/* A viewport-sized workspace: source, curve and presets each get their own panel. */
+[hidden] {
+  display: none !important;
+}
+main {
+  height: 100svh;
+  max-width: 1600px;
+  padding: 16px 22px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
+}
+header {
+  margin: 0;
+}
+.workspace {
+  min-height: 0;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 16px;
+}
+aside {
+  padding: 14px;
+  min-height: 0;
+  overflow: auto;
+}
+.control-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 16px;
+}
+.control-tabs button {
+  flex: 1;
+}
+.control-tabs button[aria-pressed="true"] {
+  background: #e8af78;
+  color: #231b14;
+}
+section + section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+section h2 {
+  margin-bottom: 12px;
+}
+.purpose {
+  margin-bottom: 18px;
+}
+#curve {
+  max-height: min(31svh, 245px);
+}
+.curve-actions {
+  gap: 5px;
+}
+.curve-actions button {
+  flex: 1;
+  padding: 7px 5px;
+}
+article {
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+.preview-toolbar {
+  flex-shrink: 0;
+}
+#image-viewport {
+  min-height: 0;
+  flex: 1;
+  max-height: none;
+  position: relative;
+}
+#preview {
+  margin: auto;
+}
+.scale {
+  flex-shrink: 0;
+  margin: 12px 0 4px;
+}
+#status {
+  flex-shrink: 0;
+  margin: 8px 0 0;
+}
+footer {
+  margin: 0;
+}
+dialog {
+  max-width: 600px;
+  max-height: 85svh;
+  padding: 26px;
+  background: #151e2c;
+  color: #c1cddd;
+  border: 1px solid #6e839c;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+dialog::backdrop {
+  background: #000a;
+  backdrop-filter: blur(3px);
+}
+dialog h2 {
+  font-size: 20px;
+  color: #edb77e;
+}
+.dialog-close {
+  float: right;
+}
+@media (max-height: 700px) and (min-width: 761px) {
+  main {
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  #curve {
+    max-height: 27svh;
+  }
+  .control-tabs {
+    margin-bottom: 10px;
+  }
+  section h2 {
+    margin-bottom: 8px;
+  }
+}
+@media (max-width: 760px) {
+  main {
+    height: auto;
+    min-height: 100svh;
+    display: block;
+    padding: 12px;
+  }
+  header {
+    margin-bottom: 12px;
+  }
+  .workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  article {
+    order: -1;
+    height: 45svh;
+    min-height: 260px;
+  }
+  aside {
+    overflow: visible;
+  }
+  #curve {
+    height: 210px;
+    max-height: none;
+  }
+  footer {
+    margin-top: 12px;
+  }
+}

@@ -54,7 +54,8 @@ const PaletteMath = {
     const p = value.points;
     if (
       !Array.isArray(p) ||
-      p.length !== 6 ||
+      p.length < 2 ||
+      p.length > 32 ||
       p.some(
         (a) =>
           !Array.isArray(a) ||
@@ -65,8 +66,13 @@ const PaletteMath = {
           ),
       )
     )
-      throw new Error("The curve must contain six valid points.");
-    if (p[0][0] !== 0 || p[0][1] !== 0 || p[5][0] !== 1 || p[5][1] !== 1)
+      throw new Error("The curve must contain 2 to 32 valid points.");
+    if (
+      p[0][0] !== 0 ||
+      p[0][1] !== 0 ||
+      p[p.length - 1][0] !== 1 ||
+      p[p.length - 1][1] !== 1
+    )
       throw new Error("Curve endpoints must be (0,0) and (1,1).");
     for (let i = 1; i < p.length; i++)
       if (p[i][0] - p[i - 1][0] < 0.0099 || p[i][1] < p[i - 1][1])

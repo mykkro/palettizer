@@ -3,7 +3,7 @@
 ![Palettizer with a thermal palette and editable transfer curve](screenshot.png)
 
 A static revival of my old interactive palette-warping experiment. Map grayscale
-intensities to color and reshape the mapping with a six-point transfer curve.
+intensities to color and reshape the mapping with a editable transfer curve.
 The new interface uses plain JavaScript, Canvas and SVG, with no dependencies.
 
 Open **index.html** directly in a browser. No server, installation, build step,
@@ -41,3 +41,21 @@ copyright 2026 Myrousz.
 
 For development, run `node test-color.cjs` for lookup-table and curve checks.
 Node is only needed for tests; using the app requires just a browser.
+
+
+Palettizer is intended to define lookup tables for heightmaps and scientific
+scalar/level data. The Sokoloff palette was used in the original experiment for
+PET data display in an MRI/PET workflow. The current prototype accepts image
+renderings, not PET/MRI volumes or DICOM/NIfTI data; physical-unit normalization
+belongs to the consuming visualization. See About in the app for context.
+
+Add point splits the segment after selection (or the widest available segment)
+without changing its mapping. Remove deletes the selected interior point.
+Curves support 2 to 32 points, including fixed endpoints. Existing six-point
+version-1 presets still work, and presets now retain variable point counts.
+Reset returns to the original six-point linear curve.
+
+Source, Curve and Presets tabs keep editing controls inside a desktop-sized
+workspace. Fit scales the preview to both available width and height; 100% and
+200% intentionally permit scrolling inside the image. Narrow screens and small
+windows can scroll as needed to keep every control accessible.
