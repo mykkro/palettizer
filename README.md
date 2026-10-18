@@ -3,7 +3,7 @@
 ![Palettizer with a thermal palette and editable transfer curve](screenshot.png)
 
 A static revival of my old interactive palette-warping experiment. Map grayscale
-intensities to color and reshape the mapping with a editable transfer curve.
+intensities to color and reshape the mapping with an editable transfer curve.
 The new interface uses plain JavaScript, Canvas and SVG, with no dependencies.
 
 Open **index.html** directly in a browser. No server, installation, build step,
